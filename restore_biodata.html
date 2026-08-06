@@ -508,7 +508,10 @@
     <hr style="margin:18px 0;border:none;border-top:1px solid var(--border-soft);">
     <div class="field"><label>Supabase URL</label><input id="fSupabaseUrl" placeholder="https://your-project.supabase.co"></div>
     <div class="field"><label>Supabase Anon Key</label><input id="fSupabaseKey" placeholder="public-anon-key"></div>
-    <button class="btn" id="saveSupabase">Simpan Supabase</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <button class="btn" id="saveSupabase">Simpan Supabase</button>
+      <button class="btn btn-ghost" id="initSupabaseDb">Initialize DB</button>
+    </div>
     <div style="margin-top:30px;border-top:1px solid var(--border-soft);padding-top:20px;">
       <button class="btn btn-ghost" id="logoutBtn">Keluar dari Admin</button>
     </div>
@@ -993,6 +996,26 @@
     const u = document.getElementById('fSupabaseUrl').value.trim();
     const k = document.getElementById('fSupabaseKey').value.trim();
     if(u && k){ setSupabaseConfig(u,k); alert('Supabase config disimpan.'); }
+  });
+
+  document.getElementById('initSupabaseDb')?.addEventListener('click', async ()=>{
+    if(!supabaseClient) return alert('Supabase belum dikonfigurasi. Isi URL + Key terlebih dahulu.');
+    if(!confirm('Inisialisasi database akan membuat row awal di tabel `site_data`. Lanjutkan?')) return;
+    try{
+      const payload = JSON.stringify(data);
+      const res = await supabaseClient.from('site_data').insert([{ id:'main', payload }]);
+      if(res.error){
+        throw res.error;
+      }
+      alert('Database berhasil diinisialisasi.');
+    }catch(err){
+      const msg = (err && (err.message || err.error)) || String(err);
+      if(msg.toLowerCase().includes('relation') || msg.toLowerCase().includes('does not exist')){
+        const sql = `-- Run this in Supabase SQL editor to create the table:\nCREATE TABLE public.site_data (id text primary key, payload text);\n-- Then insert an initial row:\nINSERT INTO public.site_data (id, payload) VALUES ('main', '{}');`;
+        navigator.clipboard?.writeText(sql).catch(()=>{});
+        alert('Tabel `site_data` belum ada. SQL pembuatan tabel telah disalin ke clipboard. Buka Supabase SQL editor dan jalankan.');
+      }else{ alert('Inisialisasi gagal: '+msg); }
+    }
   });
 
   const audioToggleBtn = document.getElementById('audioToggle');
