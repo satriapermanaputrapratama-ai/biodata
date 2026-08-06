@@ -306,7 +306,6 @@
   <div class="hero-socials" id="heroSocials"></div>
   <div class="scroll-cue"><span></span>Gulir</div>
 </section>
-
 <section id="musik">
   <div class="wrap">
     <div class="music-card reveal">
@@ -867,18 +866,6 @@
     const val = document.getElementById('fNewPassword').value.trim();
     if(val){ data.adminPassword = val; document.getElementById('fNewPassword').value = ''; await persist(); }
   });
-
-  const audioToggleBtn = document.getElementById('audioToggle');
-  const audioFrame = document.getElementById('hiddenAudioFrame');
-  if(audioToggleBtn && audioFrame){
-    let isMuted = true;
-    audioToggleBtn.addEventListener('click', ()=>{
-      isMuted = !isMuted;
-      const base = 'https://www.youtube-nocookie.com/embed/GTwAw4J_tiA?autoplay=1&loop=1&playlist=GTwAw4J_tiA&controls=0&modestbranding=1&rel=0';
-      audioFrame.src = `${base}&mute=${isMuted ? 1 : 0}`;
-      audioToggleBtn.textContent = isMuted ? 'Unmute Audio' : 'Mute Audio';
-    });
-  }
 
   loadData();
 })();
