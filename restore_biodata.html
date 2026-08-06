@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/index.min.js"></script>
 <style>
   :root{
     --radius:2px;
@@ -159,18 +160,72 @@
     color:var(--gold-soft);
   }
   .music-card p{
-    margin-bottom:18px;
+    margin-bottom:14px;
     color:var(--text-muted);
     font-size:0.95rem;
     line-height:1.6;
   }
-  .music-embed{
-    width:100%;
-    aspect-ratio:16/9;
-    border:0;
-    border-radius:14px;
-    overflow:hidden;
+  .music-meta{
+    margin-bottom:16px;
+    display:grid;
+    gap:8px;
   }
+  .music-title{
+    font-size:1.2rem;
+    font-weight:500;
+  }
+  .music-subtitle{
+    font-size:0.9rem;
+    color:var(--text-muted);
+    line-height:1.5;
+  }
+  .music-controls{
+    display:grid;
+    gap:14px;
+  }
+  .progress-wrap{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-top:8px;
+    font-size:0.85rem;
+    color:var(--text-muted);
+  }
+  .progress-wrap span{white-space:nowrap;}
+  .progress-slider{
+    flex:1;
+    appearance:none;
+    height:8px;
+    background:rgba(201,162,39,0.16);
+    border-radius:999px;
+    outline:none;
+  }
+  .progress-slider::-webkit-slider-thumb{
+    appearance:none;
+    width:14px;height:14px;
+    border-radius:50%;
+    background:var(--gold);
+    border:2px solid var(--bg);
+    cursor:pointer;
+  }
+  .progress-slider::-moz-range-thumb{
+    width:14px;height:14px;
+    border-radius:50%;
+    background:var(--gold);
+    border:2px solid var(--bg);
+    cursor:pointer;
+  }
+  .subtitle-card{
+    margin-top:18px;
+    padding:14px 16px;
+    border-radius:14px;
+    background:rgba(255,255,255,0.04);
+    color:var(--text);
+    font-size:0.9rem;
+    line-height:1.65;
+  }
+  .subtitle-card strong{display:block;margin-bottom:8px;color:var(--gold-soft);}
+  .subtitle-card span{color:var(--text-muted);}
 
   section{padding:120px 0;}
   .section-head{margin-bottom:56px;}
@@ -310,10 +365,24 @@
   <div class="wrap">
     <div class="music-card reveal">
       <h3>Audio Latar Aktif</h3>
-      <p>Musik diputar di latar belakang tanpa menampilkan pemutar YouTube.</p>
-      <button id="audioToggle" class="btn btn-ghost btn-small" style="margin-top:12px;">Unmute Audio</button>
+      <div class="music-meta">
+        <div class="music-title">Lilin Kecil — Monica Christiana</div>
+        <div class="music-subtitle">Lagu bernuansa lembut dengan lirik yang menyentuh. Geser durasi untuk melompat ke bagian yang kamu suka.</div>
+      </div>
+      <div class="music-controls">
+        <button id="audioToggle" class="btn btn-ghost btn-small" style="margin-top:0;">Play Audio</button>
+        <div class="progress-wrap">
+          <span id="currentTime">0:00</span>
+          <input id="audioProgress" class="progress-slider" type="range" min="0" max="100" value="0">
+          <span id="durationTime">0:00</span>
+        </div>
+      </div>
+      <div class="subtitle-card">
+        <strong>Lirik Pilihan</strong>
+        <span>Perihal seribu angan yang telah terbenam<br>Lilin kecil, rayakanlah bersamaku<br>Maukah tersenyum di jalan para pejuang</span>
+      </div>
     </div>
-    <iframe id="hiddenAudioFrame" src="https://www.youtube-nocookie.com/embed/GTwAw4J_tiA?autoplay=1&loop=1&playlist=GTwAw4J_tiA&controls=0&modestbranding=1&rel=0&mute=1" allow="autoplay" style="display:none;width:0;height:0;border:0;opacity:0;pointer-events:none;" aria-hidden="true"></iframe>
+    <iframe id="hiddenAudioFrame" src="https://www.youtube-nocookie.com/embed/GTwAw4J_tiA?enablejsapi=1&loop=1&playlist=GTwAw4J_tiA&controls=0&modestbranding=1&rel=0&disablekb=1&fs=0" allow="autoplay" style="position:absolute;left:-9999px;width:1px;height:1px;border:0;opacity:0;pointer-events:none;" aria-hidden="true"></iframe>
   </div>
 </section>
 
@@ -449,6 +518,24 @@
   const STORAGE_KEY = 'site-data-v2';
   const THEME_KEY = 'theme-pref';
 
+  // Supabase configuration - replace with your project values or
+  // set them via admin panel (not implemented here).
+  // To use Supabase, create a table `site_data` with columns:
+  //  - id (text, primary key)
+  //  - payload (text)
+  const SUPABASE_URL = '';
+  const SUPABASE_ANON_KEY = '';
+  let supabaseClient = null;
+  function initSupabase(){
+    try{
+      if(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase){
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        window.supabaseClient = supabaseClient;
+      }
+    }catch(e){ console.warn('Supabase init failed', e); }
+  }
+  initSupabase();
+
   const SOCIAL_ICONS = {
     instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1"/></svg>',
     tiktok: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 3v11.5a3.5 3.5 0 11-3-3.46"/><path d="M14 3c.6 2.4 2.2 4 5 4.3"/></svg>',
@@ -486,6 +573,20 @@
 
   async function loadData(){
     try{
+      // First try Supabase if configured
+      if(supabaseClient){
+        try{
+          const { data: row, error } = await supabaseClient.from('site_data').select('payload').eq('id','main').single();
+          if(!error && row && row.payload){
+            data = JSON.parse(row.payload);
+            renderAll();
+            await loadTheme();
+            return;
+          }
+        }catch(e){ console.warn('Supabase read failed', e); }
+      }
+
+      // Fallback to local/window.storage
       const res = await window.storage.get(STORAGE_KEY, true);
       if(res && res.value){ data = JSON.parse(res.value); }
       else { await window.storage.set(STORAGE_KEY, JSON.stringify(data), true); }
@@ -497,7 +598,19 @@
   }
 
   async function persist(){
-    try{ await window.storage.set(STORAGE_KEY, JSON.stringify(data), true); showToast(); }
+    try{
+      // Try Supabase upsert if available
+      if(supabaseClient){
+        try{
+          await supabaseClient.from('site_data').upsert({ id:'main', payload: JSON.stringify(data) });
+          showToast();
+          return;
+        }catch(e){ console.warn('Supabase write failed', e); }
+      }
+      // Fallback to local storage
+      await window.storage.set(STORAGE_KEY, JSON.stringify(data), true);
+      showToast();
+    }
     catch(e){ console.error('Gagal menyimpan', e); }
   }
 
@@ -866,6 +979,76 @@
     const val = document.getElementById('fNewPassword').value.trim();
     if(val){ data.adminPassword = val; document.getElementById('fNewPassword').value = ''; await persist(); }
   });
+
+  const audioToggleBtn = document.getElementById('audioToggle');
+  const audioProgress = document.getElementById('audioProgress');
+  const currentTimeLabel = document.getElementById('currentTime');
+  const durationTimeLabel = document.getElementById('durationTime');
+  let audioPlayer;
+  let audioReady = false;
+  let progressTimer;
+
+  function formatTime(seconds){
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  function updatePlayerState(){
+    if(!audioPlayer || !audioReady) return;
+    const state = audioPlayer.getPlayerState();
+    audioToggleBtn.textContent = state === YT.PlayerState.PLAYING ? 'Pause Audio' : 'Play Audio';
+  }
+
+  function updateProgress(){
+    if(!audioPlayer || !audioReady) return;
+    const duration = audioPlayer.getDuration();
+    const current = audioPlayer.getCurrentTime();
+    if(duration > 0){
+      audioProgress.value = (current / duration) * 100;
+      currentTimeLabel.textContent = formatTime(current);
+      durationTimeLabel.textContent = formatTime(duration);
+    }
+  }
+
+  function initYouTubePlayer(){
+    audioPlayer = new YT.Player('hiddenAudioFrame', {
+      events: {
+        onReady: ()=>{
+          audioReady = true;
+          updatePlayerState();
+          progressTimer = setInterval(updateProgress, 500);
+        },
+        onStateChange: updatePlayerState
+      }
+    });
+  }
+
+  window.onYouTubeIframeAPIReady = initYouTubePlayer;
+  const ytScript = document.createElement('script');
+  ytScript.src = 'https://www.youtube.com/iframe_api';
+  document.head.appendChild(ytScript);
+
+  if(audioToggleBtn){
+    audioToggleBtn.addEventListener('click', ()=>{
+      if(!audioReady || !audioPlayer) return;
+      const state = audioPlayer.getPlayerState();
+      if(state === YT.PlayerState.PLAYING){
+        audioPlayer.pauseVideo();
+      } else {
+        audioPlayer.playVideo();
+      }
+    });
+  }
+
+  if(audioProgress){
+    audioProgress.addEventListener('input', ()=>{
+      if(!audioReady || !audioPlayer) return;
+      const duration = audioPlayer.getDuration();
+      audioPlayer.seekTo(duration * (audioProgress.value / 100), true);
+      updateProgress();
+    });
+  }
 
   loadData();
 })();
